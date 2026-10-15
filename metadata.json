@@ -1,0 +1,8 @@
+{
+  "name": "OmniFlow Business Management Suite",
+  "description": "Enterprise business operations system with real-time inventory tracking, low-stock alerts, and automated team task assignment workflows backed by Firebase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

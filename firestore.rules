@@ -1,0 +1,103 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Default-deny catch-all safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // Validation for Inventory items
+    function isValidInventoryItem(data) {
+      return data.keys().hasAll(['sku', 'name', 'category', 'quantity', 'minThreshold', 'unit', 'unitCost', 'status'])
+        && data.sku is string && data.sku.size() >= 1 && data.sku.size() <= 64
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 128
+        && data.category is string && data.category.size() >= 1 && data.category.size() <= 64
+        && (data.quantity is int || data.quantity is float) && data.quantity >= 0
+        && (data.minThreshold is int || data.minThreshold is float) && data.minThreshold >= 0
+        && data.unit is string && data.unit.size() >= 1 && data.unit.size() <= 32
+        && (data.unitCost is int || data.unitCost is float) && data.unitCost >= 0
+        && data.status is string && (data.status == 'in_stock' || data.status == 'low_stock' || data.status == 'out_of_stock');
+    }
+
+    // Validation for Tasks
+    function isValidTeamTask(data) {
+      return data.keys().hasAll(['title', 'priority', 'status', 'category', 'createdAt'])
+        && data.title is string && data.title.size() >= 1 && data.title.size() <= 160
+        && data.priority is string && (data.priority == 'urgent' || data.priority == 'high' || data.priority == 'medium' || data.priority == 'low')
+        && data.status is string && (data.status == 'pending' || data.status == 'in_progress' || data.status == 'review' || data.status == 'completed')
+        && data.category is string && data.category.size() >= 1 && data.category.size() <= 64
+        && data.createdAt is string && data.createdAt.size() <= 64;
+    }
+
+    // Validation for Team Members
+    function isValidTeamMember(data) {
+      return data.keys().hasAll(['name', 'email', 'role', 'department', 'maxCapacity', 'status'])
+        && data.name is string && data.name.size() >= 1 && data.name.size() <= 128
+        && data.email is string && data.email.size() >= 3 && data.email.size() <= 128
+        && data.role is string && data.role.size() >= 1 && data.role.size() <= 64
+        && data.department is string && data.department.size() >= 1 && data.department.size() <= 64
+        && (data.maxCapacity is int || data.maxCapacity is float) && data.maxCapacity > 0
+        && data.status is string && (data.status == 'available' || data.status == 'busy' || data.status == 'away');
+    }
+
+    // Validation for Inventory Logs
+    function isValidInventoryLog(data) {
+      return data.keys().hasAll(['itemId', 'sku', 'itemName', 'delta', 'previousQty', 'newQty', 'reason', 'timestamp'])
+        && data.itemId is string && data.itemId.size() <= 128
+        && data.sku is string && data.sku.size() <= 64
+        && data.itemName is string && data.itemName.size() <= 128
+        && (data.delta is int || data.delta is float)
+        && (data.previousQty is int || data.previousQty is float)
+        && (data.newQty is int || data.newQty is float)
+        && data.reason is string && data.reason.size() <= 256
+        && data.timestamp is string && data.timestamp.size() <= 64;
+    }
+
+    // Inventory Collection
+    match /inventory/{itemId} {
+      allow get, list: if true;
+      allow create: if isValidId(itemId) && isValidInventoryItem(incoming());
+      allow update: if isValidId(itemId) && isValidInventoryItem(incoming());
+      allow delete: if isValidId(itemId);
+    }
+
+    // Tasks Collection
+    match /tasks/{taskId} {
+      allow get, list: if true;
+      allow create: if isValidId(taskId) && isValidTeamTask(incoming());
+      allow update: if isValidId(taskId) && isValidTeamTask(incoming());
+      allow delete: if isValidId(taskId);
+    }
+
+    // Team Members Collection
+    match /team_members/{memberId} {
+      allow get, list: if true;
+      allow create: if isValidId(memberId) && isValidTeamMember(incoming());
+      allow update: if isValidId(memberId) && isValidTeamMember(incoming());
+      allow delete: if isValidId(memberId);
+    }
+
+    // Inventory Logs (Immutable audit trail: allow create and read, forbid update and delete)
+    match /inventory_logs/{logId} {
+      allow get, list: if true;
+      allow create: if isValidId(logId) && isValidInventoryLog(incoming());
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}

@@ -1,0 +1,106 @@
+{
+  "entities": {
+    "InventoryItem": {
+      "title": "InventoryItem",
+      "description": "A tracked inventory product or raw material in the warehouse.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "sku": { "type": "string", "maxLength": 64 },
+        "name": { "type": "string", "maxLength": 128 },
+        "category": { "type": "string", "maxLength": 64 },
+        "quantity": { "type": "number" },
+        "minThreshold": { "type": "number" },
+        "unit": { "type": "string", "maxLength": 32 },
+        "unitCost": { "type": "number" },
+        "unitPrice": { "type": "number" },
+        "location": { "type": "string", "maxLength": 64 },
+        "supplier": { "type": "string", "maxLength": 128 },
+        "status": { "type": "string", "maxLength": 32 },
+        "lastRestockedAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 },
+        "updatedBy": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["sku", "name", "category", "quantity", "minThreshold", "unit", "unitCost", "status"]
+    },
+    "TeamTask": {
+      "title": "TeamTask",
+      "description": "An operational business task assigned manually or automated via inventory triggers.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "title": { "type": "string", "maxLength": 160 },
+        "description": { "type": "string", "maxLength": 1000 },
+        "priority": { "type": "string", "maxLength": 32 },
+        "status": { "type": "string", "maxLength": 32 },
+        "category": { "type": "string", "maxLength": 64 },
+        "assignedToId": { "type": "string", "maxLength": 128 },
+        "assignedToName": { "type": "string", "maxLength": 128 },
+        "assignedToRole": { "type": "string", "maxLength": 64 },
+        "relatedSku": { "type": "string", "maxLength": 64 },
+        "dueDate": { "type": "string", "maxLength": 64 },
+        "estimatedHours": { "type": "number" },
+        "automationSource": { "type": "string", "maxLength": 64 },
+        "createdBy": { "type": "string", "maxLength": 128 },
+        "createdAt": { "type": "string", "maxLength": 64 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["title", "priority", "status", "category", "createdAt"]
+    },
+    "TeamMember": {
+      "title": "TeamMember",
+      "description": "A business team member eligible for automated or manual task assignments.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "name": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 128 },
+        "role": { "type": "string", "maxLength": 64 },
+        "department": { "type": "string", "maxLength": 64 },
+        "maxCapacity": { "type": "number" },
+        "currentWorkload": { "type": "number" },
+        "status": { "type": "string", "maxLength": 32 },
+        "skills": { "type": "array" },
+        "avatarUrl": { "type": "string", "maxLength": 256 },
+        "updatedAt": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["name", "email", "role", "department", "maxCapacity", "status"]
+    },
+    "InventoryLog": {
+      "title": "InventoryLog",
+      "description": "Historical audit entry for inventory adjustments and replenishment.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "maxLength": 128 },
+        "itemId": { "type": "string", "maxLength": 128 },
+        "sku": { "type": "string", "maxLength": 64 },
+        "itemName": { "type": "string", "maxLength": 128 },
+        "delta": { "type": "number" },
+        "previousQty": { "type": "number" },
+        "newQty": { "type": "number" },
+        "reason": { "type": "string", "maxLength": 256 },
+        "performedBy": { "type": "string", "maxLength": 128 },
+        "timestamp": { "type": "string", "maxLength": 64 }
+      },
+      "required": ["itemId", "sku", "itemName", "delta", "previousQty", "newQty", "reason", "timestamp"]
+    }
+  },
+  "firestore": {
+    "/inventory/{itemId}": {
+      "schema": { "$ref": "entities/InventoryItem" },
+      "description": "Global inventory catalog and live warehouse stock levels."
+    },
+    "/tasks/{taskId}": {
+      "schema": { "$ref": "entities/TeamTask" },
+      "description": "Operational tasks and automated assignment pipeline."
+    },
+    "/team_members/{memberId}": {
+      "schema": { "$ref": "entities/TeamMember" },
+      "description": "Directory of staff members, department allocations, and capacity tracking."
+    },
+    "/inventory_logs/{logId}": {
+      "schema": { "$ref": "entities/InventoryLog" },
+      "description": "Immutable audit entries tracking all stock modifications."
+    }
+  }
+}
